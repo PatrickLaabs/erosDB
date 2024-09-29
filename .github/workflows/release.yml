@@ -60,6 +60,6 @@ jobs:
 
       - name: Create GitHub Release with GitHub CLI
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GITHUB_TOKEN, or your PAT in secrets if needed
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           gh release create ${{ github.ref }} erosDB-ubuntu-latest#erosDB-linux erosDB-macos-latest#erosDB-macos --title "Release ${{ github.ref }}" --notes "Automated release for ${{ github.ref }}"

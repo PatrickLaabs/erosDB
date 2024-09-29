@@ -47,31 +47,42 @@ jobs:
         with:
           name: erosDB-macos-latest
 
-      - name: Create GitHub Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install gh -y
+
+      - name: Create GitHub Release with GitHub CLI
+        run: |
+          gh release create ${{ github.ref }} erosDB-ubuntu-latest#erosDB-linux erosDB-macos-latest#erosDB-macos --title "Release ${{ github.ref }}" --notes "Automated release for ${{ github.ref }}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_PAT }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: |
-            Binary release for version ${{ github.ref }}
-          draft: false
-          prerelease: false
 
-      - name: Upload binaries to release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: erosDB-ubuntu-latest
-          asset_name: erosDB-linux
-          asset_content_type: application/octet-stream
+#      - name: Create GitHub Release
+#        id: create_release
+#        uses: actions/create-release@v1
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_PAT }}
+#        with:
+#          tag_name: ${{ github.ref }}
+#          release_name: Release ${{ github.ref }}
+#          body: |
+#            Binary release for version ${{ github.ref }}
+#          draft: false
+#          prerelease: false
 
-      - name: Upload macOS binary to release
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: erosDB-macos-latest
-          asset_name: erosDB-macos
-          asset_content_type: application/octet-stream
+#      - name: Upload binaries to release
+#        uses: actions/upload-release-asset@v1
+#        with:
+#          upload_url: ${{ steps.create_release.outputs.upload_url }}
+#          asset_path: erosDB-ubuntu-latest
+#          asset_name: erosDB-linux
+#          asset_content_type: application/octet-stream
+#
+#      - name: Upload macOS binary to release
+#        uses: actions/upload-release-asset@v1
+#        with:
+#          upload_url: ${{ steps.create_release.outputs.upload_url }}
+#          asset_path: erosDB-macos-latest
+#          asset_name: erosDB-macos
+#          asset_content_type: application/octet-stream

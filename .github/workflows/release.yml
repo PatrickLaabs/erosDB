@@ -40,6 +40,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout code  # Add this step to ensure the repo is cloned
+        uses: actions/checkout@v3
+
       - name: Download Linux artifact
         uses: actions/download-artifact@v3
         with:
@@ -57,6 +60,6 @@ jobs:
 
       - name: Create GitHub Release with GitHub CLI
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Use GITHUB_TOKEN, or your PAT in secrets if needed
         run: |
           gh release create ${{ github.ref }} erosDB-ubuntu-latest#erosDB-linux erosDB-macos-latest#erosDB-macos --title "Release ${{ github.ref }}" --notes "Automated release for ${{ github.ref }}"

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"encoding/base64"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"strings"
@@ -12,7 +11,7 @@ import (
 
 // Function to encode a file to Base64
 func encodeFileToBase64(filePath string) (string, error) {
-	fileBytes, err := ioutil.ReadFile(filePath) // Read file contents
+	fileBytes, err := os.ReadFile(filePath) // Read file contents
 	if err != nil {
 		return "", err
 	}
@@ -23,7 +22,7 @@ func encodeFileToBase64(filePath string) (string, error) {
 
 // Function to send a PUT command
 func sendPutCommand(key string, filePath string) {
-	conn, err := net.Dial("tcp", "localhost:8080")
+	conn, err := net.Dial("tcp", "localhost:3001")
 	if err != nil {
 		fmt.Println("Error connecting to server:", err)
 		return
@@ -50,7 +49,7 @@ func sendPutCommand(key string, filePath string) {
 
 // Function to send a GET command
 func sendGetCommand(key string) {
-	conn, err := net.Dial("tcp", "localhost:8080")
+	conn, err := net.Dial("tcp", "localhost:3001")
 	if err != nil {
 		fmt.Println("Error connecting to server:", err)
 		return

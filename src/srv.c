@@ -5,7 +5,7 @@
 #include <arpa/inet.h>
 #include <pthread.h>  // POSIX threads for macOS
 
-#define PORT 8080
+#define PORT 3001
 #define BUFFER_SIZE 8192
 #define MAX_KEY_LENGTH 100
 #define MAX_FILE_CONTENT_LENGTH 8192  // To store Base64 encoded file content

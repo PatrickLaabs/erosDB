@@ -3,17 +3,17 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
-#include <pthread.h>  // POSIX threads for macOS
+#include <pthread.h>
 
 #define PORT 3001
 #define BUFFER_SIZE 8192
 #define MAX_KEY_LENGTH 100
-#define MAX_FILE_CONTENT_LENGTH 8192  // To store Base64 encoded file content
+#define MAX_FILE_CONTENT_LENGTH 8192
 
 // Key-Value Pair Structure
 typedef struct {
     char key[MAX_KEY_LENGTH];
-    char base64Content[MAX_FILE_CONTENT_LENGTH];  // To store Base64-encoded file content
+    char base64Content[MAX_FILE_CONTENT_LENGTH];
 } KeyValuePair;
 
 // Function to store a key and Base64-encoded content in the database
@@ -75,9 +75,7 @@ void get(const char *key, int clientSocket) {
 
     while (fread(&kvp, sizeof(KeyValuePair), 1, db)) {
         if (strncmp(kvp.key, key, MAX_KEY_LENGTH) == 0) {
-            // Ensure the Base64 content is valid and does not have extra newlines
             send(clientSocket, kvp.base64Content, strlen(kvp.base64Content), 0);
-//            send(clientSocket, kvp.base64Content, strlen(kvp.base64Content), 0);
             found = 1;
             break;
         }
@@ -126,8 +124,8 @@ void delete(const char *key) {
     fclose(db);
     fclose(temp);
 
-    remove(dbPath);        // Fix: Remove the correct database file
-    rename(tempDbPath, dbPath);  // Fix: Rename temp file to eros.db
+    remove(dbPath);
+    rename(tempDbPath, dbPath);
 
     if (!found) {
         printf("DELETE: Key not found: %s\n", key);

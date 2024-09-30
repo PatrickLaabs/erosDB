@@ -27,13 +27,13 @@ jobs:
           ls -lh ./build/erosDB
 
       - name: Rename and upload artifact
-        run: mv build/erosDB erosDB-${{ matrix.os }}  # Rename the artifact to match the OS
+        run: mv build/erosDB erosDB-${{ matrix.os }}-${{ github.tag }} # Rename the artifact to match the OS
 
       - name: Upload artifact for release
         uses: actions/upload-artifact@v3
         with:
-          name: erosDB-${{ matrix.os }}
-          path: erosDB-${{ matrix.os }}  # Ensure the correct file path
+          name: erosDB-${{ matrix.os }}-${{ github.tag }}
+          path: erosDB-${{ matrix.os }}-${{ github.tag }}
 
   release:
     needs: build
@@ -46,12 +46,12 @@ jobs:
       - name: Download Linux artifact
         uses: actions/download-artifact@v3
         with:
-          name: erosDB-ubuntu-latest
+          name: erosDB-ubuntu-latest-${{ github.tag }}
 
       - name: Download macOS artifact
         uses: actions/download-artifact@v3
         with:
-          name: erosDB-macos-latest
+          name: erosDB-macos-latest-${{ github.tag }}
 
       - name: Install GitHub CLI
         run: |
@@ -62,4 +62,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
-          gh release create ${{ github.ref }} erosDB-ubuntu-latest#erosDB-linux erosDB-macos-latest#erosDB-macos --title "Release ${{ github.ref }}" --notes "Automated release for ${{ github.ref }}"
+          gh release create ${{ github.ref }} erosDB-ubuntu-latest-${{ github.tag }}#erosDB-linux erosDB-macos-latest-${{ github.tag }}#erosDB-macos --title "Release ${{ github.ref }}" --notes "Automated release for ${{ github.ref }}"

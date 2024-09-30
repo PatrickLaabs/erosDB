@@ -62,8 +62,8 @@ func sendGetCommand(key string) {
 
 	// Read response from the server
 	response, _ := bufio.NewReader(conn).ReadString('\n')
-	//fmt.Println("Response from server:")
-	//fmt.Println(response)
+	fmt.Println("Response from server:")
+	fmt.Println(response)
 
 	parts := strings.SplitN(response, " ", 2)
 	if len(parts) == 2 {
@@ -87,7 +87,7 @@ func sendGetCommand(key string) {
 
 // Function to send a DELETE command
 func sendDeleteCommand(key string) {
-	conn, err := net.Dial("tcp", "localhost:8080")
+	conn, err := net.Dial("tcp", "localhost:3001")
 	if err != nil {
 		fmt.Println("Error connecting to server:", err)
 		return

@@ -13,19 +13,27 @@
 // Key-Value Pair Structure
 typedef struct {
     char key[MAX_KEY_LENGTH];
-    char value[MAX_FILE_CONTENT_LENGTH];  // To store Base64-encoded file content
+    char base64Content[MAX_FILE_CONTENT_LENGTH];  // To store Base64-encoded file content
 } KeyValuePair;
 
 // Function to store a key and Base64-encoded content in the database
-void put(const char *key, const char *value) {
-    // Get the home directory from environment variable
+void put(const char *key, const char *base64Content) {
+    if (strlen(key) >= MAX_KEY_LENGTH) {
+        printf("Error: Key length exceeds the maximum allowed.\n");
+        return;
+    }
+
+    if (strlen(base64Content) >= MAX_FILE_CONTENT_LENGTH) {
+        printf("Error: Base64 content exceeds the maximum allowed size.\n");
+        return;
+    }
+
     const char *home = getenv("HOME");
     if (!home) {
         printf("Error: HOME environment variable not set.\n");
         return;
     }
 
-    // Construct the full path to eros.db
     char dbPath[256];
     snprintf(dbPath, sizeof(dbPath), "%s/.eros/eros.db", home);
 
@@ -37,24 +45,22 @@ void put(const char *key, const char *value) {
 
     KeyValuePair kvp;
     strncpy(kvp.key, key, MAX_KEY_LENGTH);
-    strncpy(kvp.value, value, MAX_FILE_CONTENT_LENGTH);
+    strncpy(kvp.base64Content, base64Content, MAX_FILE_CONTENT_LENGTH);
 
-    fwrite(&kvp, sizeof(KeyValuePair), 1, db);  // Write key-value pair to the file
+    fwrite(&kvp, sizeof(KeyValuePair), 1, db);
     fclose(db);
 
-    printf("PUT: Stored key-value: %s -> Base64 Content (length %ld)\n", key, strlen(value));
+    printf("PUT: Stored key-value: %s -> Base64 Content (length %ld)\n", key, strlen(base64Content));
 }
 
 // Function to get the Base64 content by key
 void get(const char *key, int clientSocket) {
-    // Get the home directory from environment variable
     const char *home = getenv("HOME");
     if (!home) {
         printf("Error: HOME environment variable not set.\n");
         return;
     }
 
-    // Construct the full path to eros.db
     char dbPath[256];
     snprintf(dbPath, sizeof(dbPath), "%s/.eros/eros.db", home);
 
@@ -69,9 +75,9 @@ void get(const char *key, int clientSocket) {
 
     while (fread(&kvp, sizeof(KeyValuePair), 1, db)) {
         if (strncmp(kvp.key, key, MAX_KEY_LENGTH) == 0) {
-            // Send only the Base64 encoded content to the client
-            send(clientSocket, kvp.value, strlen(kvp.value), 0);
-
+            // Ensure the Base64 content is valid and does not have extra newlines
+            send(clientSocket, kvp.base64Content, strlen(kvp.base64Content), 0);
+//            send(clientSocket, kvp.base64Content, strlen(kvp.base64Content), 0);
             found = 1;
             break;
         }
@@ -87,22 +93,19 @@ void get(const char *key, int clientSocket) {
 
 // Function to delete a key-value pair
 void delete(const char *key) {
-    // Get the home directory from environment variable
     const char *home = getenv("HOME");
     if (!home) {
         printf("Error: HOME environment variable not set.\n");
         return;
     }
 
-    // Construct the full path to eros.db
     char dbPath[256];
+    char tempDbPath[256];
     snprintf(dbPath, sizeof(dbPath), "%s/.eros/eros.db", home);
-
-    char tempDb[256];
-    snprintf(tempDb, sizeof(tempDb), "%s/.eros/temp.db", home);
+    snprintf(tempDbPath, sizeof(tempDbPath), "%s/.eros/temp.db", home);
 
     FILE *db = fopen(dbPath, "r");
-    FILE *temp = fopen(tempDb, "w");
+    FILE *temp = fopen(tempDbPath, "w");
     if (!db || !temp) {
         perror("Error opening files");
         return;
@@ -123,8 +126,8 @@ void delete(const char *key) {
     fclose(db);
     fclose(temp);
 
-    remove(dbPath);
-    rename(tempDb,dbPath);
+    remove(dbPath);        // Fix: Remove the correct database file
+    rename(tempDbPath, dbPath);  // Fix: Rename temp file to eros.db
 
     if (!found) {
         printf("DELETE: Key not found: %s\n", key);
@@ -143,21 +146,30 @@ void *handle_client(void *arg) {
             break;  // Client closed connection
         }
 
-        char command[10], key[100], value[MAX_FILE_CONTENT_LENGTH];
-        sscanf(buffer, "%s %s %s", command, key, value);
+        // Variables for command, key, and content
+        char command[10], key[100];
+        char *base64Content;
 
-        if (strcmp(command, "PUT") == 0) {
-            printf("PUT Command: Key: %s, Base64 Content (truncated): %.20s...\n", key, value);
-            put(key, value);  // Store the Base64-encoded content
-        } else if (strcmp(command, "GET") == 0) {
-            printf("GET Command: Key: %s\n", key);
-            get(key, clientSocket);  // Return Base64 content to the client
-        } else if (strcmp(command, "DELETE") == 0) {
-            printf("DELETE Command: Key: %s\n", key);
-            delete(key);  // Delete the key-value pair
-        } else {
-            printf("Unknown command: %s\n", buffer);
-        }
+        // Parse the command and key first
+        sscanf(buffer, "%s %s", command, key);
+
+          // Find the position of the base64Content, which starts after the second space
+          base64Content = strchr(buffer, ' ') + 1;  // Skip command
+          base64Content = strchr(base64Content, ' ') + 1;  // Skip key
+
+          // Now base64Content points to the rest of the string, which is the Base64 content
+          if (strcmp(command, "PUT") == 0) {
+              printf("PUT Command: Key: %s, Base64 Content (truncated): %.20s...\n", key, base64Content);
+              put(key, base64Content);  // Store the Base64-encoded content
+          } else if (strcmp(command, "GET") == 0) {
+              printf("GET Command: Key: %s\n", key);
+              get(key, clientSocket);  // Return Base64 content to the client
+          } else if (strcmp(command, "DELETE") == 0) {
+              printf("DELETE Command: Key: %s\n", key);
+              delete(key);  // Delete the key-value pair
+          } else {
+              printf("Unknown command: %s\n", buffer);
+          }
 
         char *response = "Command processed.\n";
         send(clientSocket, response, strlen(response), 0);
